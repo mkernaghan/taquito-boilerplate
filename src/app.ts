@@ -8,6 +8,7 @@ export class App {
   public contractAddress = "KT1Pdsb8cUZkXGxVaXCzo9DntriCEYdG9gWT";
   public counter: number;
   public userAddress: string | null;
+  private publicToken: string;
 
   constructor() {
     this.tk.setRpcProvider("https://carthagenet.smartpy.io");
@@ -15,6 +16,7 @@ export class App {
     this.contract = undefined;
     this.counter = 0;
     this.userAddress = null;
+    this.publicToken = "";
   }
 
   private async initContract() {
@@ -65,10 +67,31 @@ export class App {
 
   private async connectWallet() {
     const wallet = new BeaconWallet({
-      name: "Taquito Boilerplate"
+      name: "Taquito Boilerplate",
+      eventHandlers: {
+        P2P_LISTEN_FOR_CHANNEL_OPEN: {
+          handler: async data => {
+            console.log("Listening to P2P channel:", data);
+            this.publicToken = data.publicKey;
+            $("#balance-form").addClass("hide");
+            $("#public-token").text(this.publicToken);
+            $("#connecting").removeClass("hide").addClass("show");
+          }
+        },
+        PERMISSION_REQUEST_SENT: {
+          handler: async data => {
+            console.log("Permission request sent:", data);
+          }
+        },
+        PERMISSION_REQUEST_SUCCESS: {
+          handler: async data => {
+            console.log("Wallet is connected:", data);
+          }
+        }
+      }
     });
-    await wallet.requestPermissions({ network: { type: "custom" } });
     this.tk.setWalletProvider(wallet);
+    await wallet.requestPermissions({ network: { type: "custom" } });
     this.userAddress = wallet.permissions.address;
     this.getBalance(this.userAddress as string);
     const { contract, storage } = await this.initContract();
