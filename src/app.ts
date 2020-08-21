@@ -57,7 +57,7 @@ export class App {
   private showBalance(balance: number) {
     $("#error-message").removeClass().addClass("hide");
     $("#balance-output").removeClass().addClass("show");
-    $("#balance").html(balance);
+    $("#balance").text(balance.toLocaleString("en-US"));
   }
 
   private getBalance(address: string) {
@@ -105,8 +105,13 @@ export class App {
     });
     this.tk.setWalletProvider(wallet);
     await wallet.requestPermissions({ network: { type: "custom" } });
+    // gets user's address
     this.userAddress = wallet.permissions.address;
+    $("#user-address-container").removeClass("hide").addClass("show");
+    $("#user-address").text(this.userAddress);
+    // updates balance
     this.getBalance(this.userAddress as string);
+    // creates contract instance
     const { contract, storage } = await this.initContract();
     this.contract = contract;
     this.counter = storage;
