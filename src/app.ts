@@ -10,7 +10,7 @@ export class App {
   public counter: number;
   public userAddress: string | null;
   private publicToken: string;
-  public qrCode: string;
+  private wallet: BeaconWallet;
 
   constructor() {
     this.tk.setRpcProvider("https://carthagenet.smartpy.io");
@@ -30,7 +30,7 @@ export class App {
 
   public initUI() {
     $("#show-balance-button").bind("click", () =>
-      this.getBalance($("#address-input").val())
+      this.getBalance($("#address-input").val() as string)
     );
 
     $("#connect-wallet").bind("click", () => {
@@ -43,6 +43,10 @@ export class App {
 
     $("#decrement-counter").bind("click", () => {
       this.decrementCounter();
+    });
+
+    $("#disconnect-wallet").bind("click", () => {
+      this.disconnectWallet();
     });
   }
 
@@ -104,11 +108,12 @@ export class App {
       }
     });
     this.tk.setWalletProvider(wallet);
-    await wallet.requestPermissions({ network: { type: "custom" } });
+    await wallet.requestPermissions({ network: { type: "carthagenet" } });
+    this.wallet = wallet;
     // gets user's address
     this.userAddress = wallet.permissions.address;
     $("#user-address-container").removeClass("hide").addClass("show");
-    $("#user-address").text(this.userAddress);
+    $("#user-address").text(this.userAddress || "none");
     // updates balance
     this.getBalance(this.userAddress as string);
     // creates contract instance
@@ -120,6 +125,11 @@ export class App {
     $("#balance-form").addClass("hide");
     $("#increment-decrement").removeClass("hide").addClass("show");
     $("#header__interact-with-contract").removeClass("hide").addClass("show");
+  }
+
+  public async disconnectWallet() {
+    console.log(this.wallet.client);
+    await this.wallet.client.removeAllAccounts();
   }
 
   private async incrementCounter() {
