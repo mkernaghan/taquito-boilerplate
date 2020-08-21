@@ -1,6 +1,7 @@
 import { Tezos, TezosToolkit } from "@taquito/taquito";
 import { BeaconWallet } from "@taquito/beacon-wallet";
 import $ from "jquery";
+import qrcode from "qrcode-generator";
 
 export class App {
   private tk: TezosToolkit = Tezos;
@@ -9,6 +10,7 @@ export class App {
   public counter: number;
   public userAddress: string | null;
   private publicToken: string;
+  public qrCode: string;
 
   constructor() {
     this.tk.setRpcProvider("https://carthagenet.smartpy.io");
@@ -76,6 +78,17 @@ export class App {
             $("#balance-form").addClass("hide");
             $("#public-token").text(this.publicToken);
             $("#connecting").removeClass("hide").addClass("show");
+            // generates QR code
+            const qr = qrcode(0, "L");
+            qr.addData(this.publicToken);
+            qr.make();
+            $("#qr-code").html(qr.createImgTag(4));
+          }
+        },
+        P2P_CHANNEL_CONNECT_SUCCESS: {
+          handler: async data => {
+            console.log("Channel connected:", data);
+            $("#connecting").removeClass("show").addClass("hide");
           }
         },
         PERMISSION_REQUEST_SENT: {
